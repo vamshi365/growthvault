@@ -40,14 +40,14 @@ export default function PasscodePage() {
         passcodeEnabled: true,
         passcodeHash: hash,
       });
-      setMsg("Passcode set (local demo).");
+      setMsg("Demo passcode saved locally — not encryption.");
       setPin("");
       setMode("unlock");
       return;
     }
     const hash = await hashPin(value);
     if (hash === snapshot.profile.passcodeHash) {
-      setMsg("Unlocked.");
+      setMsg("Demo unlock OK — app was never gated.");
       setPin("");
     } else {
       setMsg("Incorrect passcode.");
@@ -71,15 +71,18 @@ export default function PasscodePage() {
         >
           <BackIcon />
         </Link>
-        <h1 className="text-xl font-bold">Passcode</h1>
+        <h1 className="text-xl font-bold">Passcode (demo)</h1>
       </header>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(159,132,255,0.15)] text-gv-accent">
           <LockIcon size={28} />
         </div>
+        <p className="max-w-xs text-center text-sm text-gv-text-muted">
+          Local demo keypad only — not a vault lock and does not encrypt data.
+        </p>
         <p className="text-sm text-gv-text-muted">
-          {mode === "set" ? "Create a 4-digit passcode" : "Enter passcode"}
+          {mode === "set" ? "Create a 4-digit demo passcode" : "Enter demo passcode"}
         </p>
         <div className="flex gap-3">
           {dots.map((on, i) => (

@@ -55,11 +55,11 @@ export default function ProfilePage() {
         >
           <LockIcon className="text-gv-accent" />
           <div className="flex-1">
-            <p className="font-semibold">Passcode lock</p>
+            <p className="font-semibold">Passcode (local demo)</p>
             <p className="text-xs text-gv-text-muted">
               {snapshot.profile.passcodeEnabled
-                ? "Enabled (local demo)"
-                : "Optional local gate"}
+                ? "Demo keypad on — not a vault lock / no encryption"
+                : "Demo keypad only — does not lock or encrypt the vault"}
             </p>
           </div>
           <span className="text-gv-accent">→</span>

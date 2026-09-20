@@ -40,10 +40,13 @@ export default function JourneyDetailPage() {
   }
   if (!journey) {
     return (
-      <div className="gv-page">
-        <p>Journey not found.</p>
-        <Link href="/home" className="text-gv-accent">
-          Home
+      <div className="gv-page flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-lg font-bold">Journey not found</p>
+        <p className="max-w-xs text-sm text-gv-text-muted">
+          This journey id is missing or was cleared from local storage.
+        </p>
+        <Link href="/home" className="gv-cta px-6 py-3 text-sm">
+          Back to Home
         </Link>
       </div>
     );

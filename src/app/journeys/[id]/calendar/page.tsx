@@ -48,7 +48,14 @@ export default function CalendarPage() {
   });
 
   if (!journey) {
-    return <div className="gv-page">Journey not found.</div>;
+    return (
+      <div className="gv-page flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-lg font-bold">Journey not found</p>
+        <Link href="/home" className="gv-cta px-6 py-3 text-sm">
+          Back to Home
+        </Link>
+      </div>
+    );
   }
 
   return (

@@ -123,6 +123,25 @@ export async function writeSnapshot(snapshot: AppSnapshot): Promise<void> {
   await tx.done;
 }
 
+/** Close + delete DB — for Vitest isolation only. */
+export async function resetDbForTests(): Promise<void> {
+  if (dbPromise) {
+    try {
+      const db = await dbPromise;
+      db.close();
+    } catch {
+      /* ignore */
+    }
+    dbPromise = null;
+  }
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error ?? new Error("deleteDatabase failed"));
+    req.onblocked = () => resolve();
+  });
+}
+
 export function uid(prefix = "id"): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }

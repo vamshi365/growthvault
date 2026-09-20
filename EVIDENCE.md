@@ -61,3 +61,43 @@ See CI/local: `npm run build` exit 0 required for done.
 
 - Explore = Journey Templates only (≥7 incl. Habit Stack) — **no fake social users**
 - Accent `--gv-accent: #9F84FF` from CREATOR CSS `:root` block
+
+## SENTINEL remediation (2026-09-20 BST)
+
+Addressed PARTIAL gaps from `/workspace/sentinel-challenge/growthvault-verify.md`.
+
+### High — automated tests
+
+- Added Vitest + `fake-indexeddb`
+- Scripts: `npm test` → `vitest run`
+- Suites:
+  - `src/lib/__tests__/streaks.test.ts` — `currentStreak` / grace yesterday / global days / `longestStreak`
+  - `src/lib/__tests__/badges.test.ts` — `deriveBadges` unlock + progress (Pioneer, 7-day, Master) + preserve `unlockedAt`
+  - `src/lib/__tests__/db.test.ts` — IndexedDB CRUD: putJourney / putLog / profile / badges / writeSnapshot / clearAllData
+
+### Medium — passcode demo copy (document / label only)
+
+- Passcode remains a **local demo keypad**, not an app lock and **not encryption**.
+- UI labels on `/profile` and `/profile/passcode` state: “local demo / not a vault lock / does not encrypt”.
+
+### Medium — runtime proof steps (manual)
+
+Expected: demo seed → Home shows journey + streak ≥1 → Awards shows Growth Pioneer + 7 Day Warrior unlocked.
+
+1. Open `http://localhost:4330/home` (or `/profile`).
+2. Profile → **Load demo data** (Summer Body Prep · 7 logs · pioneer + warrior).
+3. Home: active journey card visible; streak chip reflects consecutive logged days.
+4. Awards (`/awards`): Growth Pioneer + 7 Day Warrior unlocked; Keep Building shows next incomplete.
+5. Optional: Journey → **Add Evolution Log** with photo/caption → streak increments if new calendar day.
+6. Profile → Clear all data (confirm) → Home empty; Awards reset.
+
+Optional automated proof: `npm test` covers the same derive + IDB rules without a browser.
+
+### Low — soft-404 empty state
+
+- Unknown `/journeys/[id]` (and calendar/compare) shows in-app **Journey not found** + **Back to Home** — no fake journey shell. HTTP 200 OK for SPA.
+
+### Gates
+
+- `npm test` — PASS (required)
+- `npm run build` — PASS (required)
