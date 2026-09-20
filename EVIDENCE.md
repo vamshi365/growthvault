@@ -49,3 +49,15 @@ Canonical CSS `:root` from `/workspace/creator/growthvault-visual-system.md` —
 ## Build
 
 See CI/local: `npm run build` exit 0 required for done.
+
+## Build result (2026-09-20 BST)
+
+- `npm run build` — **PASS** (Next.js 16.3.5, TypeScript OK)
+- Preview — `http://localhost:4330` (Ready)
+- Commit — `aab354e273d383ca681d7eacbe4a79cef5941e0b` on `main`
+- URL — https://github.com/vamshi365/growthvault/commit/aab354e273d383ca681d7eacbe4a79cef5941e0b
+
+## Confirmations
+
+- Explore = Journey Templates only (≥7 incl. Habit Stack) — **no fake social users**
+- Accent `--gv-accent: #9F84FF` from CREATOR CSS `:root` block
