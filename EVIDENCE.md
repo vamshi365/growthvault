@@ -99,5 +99,8 @@ Optional automated proof: `npm test` covers the same derive + IDB rules without 
 
 ### Gates
 
-- `npm test` — PASS (required)
-- `npm run build` — PASS (required)
+- `npm test` — **PASS** (22 tests, Vitest 3.2.7)
+- `npm run build` — **PASS** (Next.js 16.3.5)
+- Commit — `9273da5902a3e548385121f9d045cae1c90815c1` on `main`
+- URL — https://github.com/vamshi365/growthvault/commit/9273da5902a3e548385121f9d045cae1c90815c1
+- Preview — `http://localhost:4330` restarted
