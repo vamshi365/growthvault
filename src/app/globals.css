@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  --gv-bg: #0B0B10;
+  --gv-bg-elevated: #121218;
+  --gv-surface: #1A1A24;
+  --gv-surface-muted: #14141C;
+  --gv-border: #2A2A3A;
+  --gv-accent: #9F84FF;
+  --gv-accent-soft: #8B8BF5;
+  --gv-accent-text: #B4A9FF;
+  --gv-text: #FFFFFF;
+  --gv-text-muted: #8E8E93;
+  --gv-text-placeholder: #6E6E7A;
+  --gv-cta-from: #7C5CFF;
+  --gv-cta-to: #5B7CFF;
+  --gv-streak-flame: #FF9F43;
+  --gv-streak-gold: #FFCC00;
+  --gv-progress-track: #2C2C36;
+  --gv-radius-card: 28px;
+  --gv-radius-tile: 22px;
+  --gv-radius-squircle: 16px;
+  --gv-radius-pill: 999px;
+  --gv-font: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  --gv-missed-bg: #3A2024;
+  --gv-missed-text: #FF8A80;
+}
+
+@theme inline {
+  --color-gv-bg: var(--gv-bg);
+  --color-gv-elevated: var(--gv-bg-elevated);
+  --color-gv-card: var(--gv-surface);
+  --color-gv-muted: var(--gv-surface-muted);
+  --color-gv-border: var(--gv-border);
+  --color-gv-accent: var(--gv-accent);
+  --color-gv-accent-soft: var(--gv-accent-soft);
+  --color-gv-accent-text: var(--gv-accent-text);
+  --color-gv-text: var(--gv-text);
+  --color-gv-text-muted: var(--gv-text-muted);
+  --color-gv-placeholder: var(--gv-text-placeholder);
+  --color-gv-flame: var(--gv-streak-flame);
+  --color-gv-gold: var(--gv-streak-gold);
+  --color-gv-track: var(--gv-progress-track);
+  --font-sans: var(--gv-font);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--gv-bg);
+  color: var(--gv-text);
+  font-family: var(--gv-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.gv-card {
+  background: var(--gv-surface);
+  border-radius: var(--gv-radius-card);
+}
+
+.gv-tile {
+  background: var(--gv-surface);
+  border-radius: var(--gv-radius-tile);
+}
+
+.gv-pill {
+  border-radius: var(--gv-radius-pill);
+}
+
+.gv-cta {
+  background: linear-gradient(90deg, var(--gv-cta-from), var(--gv-cta-to));
+  color: #fff;
+  border: none;
+  border-radius: var(--gv-radius-pill);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gv-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gv-page {
+  padding: 20px 20px calc(108px + env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
