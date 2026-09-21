@@ -166,7 +166,7 @@ function NewJourneyForm() {
 
           <PhotoPicker
             photo={photo}
-            onPhoto={setPhoto}
+            onPhoto={(url) => setPhoto(url)}
             emptyLabel="Add Day 1 photo (optional · camera or gallery)"
             previewClassName="h-40 w-full rounded-[16px] object-cover"
             className="gv-card border border-dashed border-gv-border bg-transparent p-5"

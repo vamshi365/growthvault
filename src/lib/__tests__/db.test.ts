@@ -38,6 +38,7 @@ function makeLog(journeyId: string, id = "l_test"): EvolutionLog {
     tags: ["gym"],
     createdAt: new Date().toISOString(),
     dayIndex: 1,
+    captureSource: "gallery",
   };
 }
 
@@ -102,6 +103,20 @@ describe("IndexedDB CRUD", () => {
     expect(snap.profile.displayName).toBe("Fresh");
     expect(snap.journeys.map((j) => j.id)).toEqual(["new"]);
     expect(snap.logs).toHaveLength(1);
+  });
+
+
+  it("persists referenceLogId and captureSource on logs", async () => {
+    const j = makeJourney("j_ref");
+    await putJourney(j);
+    await putLog({
+      ...makeLog("j_ref", "l_child"),
+      referenceLogId: "l_parent",
+      captureSource: "camera",
+    });
+    const snap = await loadSnapshot();
+    expect(snap.logs[0].referenceLogId).toBe("l_parent");
+    expect(snap.logs[0].captureSource).toBe("camera");
   });
 
   it("clearAllData wipes journeys/logs/badges/meta", async () => {

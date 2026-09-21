@@ -13,7 +13,7 @@ import {
 
 type PhotoPickerProps = {
   photo: string | null;
-  onPhoto: (dataUrl: string) => void;
+  onPhoto: (dataUrl: string, source: PhotoSource) => void;
   /** Empty-state hint under the camera icon */
   emptyLabel?: string;
   /** Optional larger preview height class */
@@ -43,6 +43,7 @@ export function PhotoPicker({
   const [denyMessage, setDenyMessage] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const pendingSource = useRef<PhotoSource>("gallery");
 
   function openSheet() {
     setSheetMode("actions");
@@ -56,10 +57,11 @@ export function PhotoPicker({
 
   async function runGallery() {
     setBusy(true);
+    pendingSource.current = "gallery";
     try {
       if (isNativePlatform()) {
         const dataUrl = await capturePhoto("gallery");
-        onPhoto(dataUrl);
+        onPhoto(dataUrl, "gallery");
         setDenyMessage(null);
       } else {
         galleryInputRef.current?.click();
@@ -76,6 +78,7 @@ export function PhotoPicker({
 
   async function runCameraAfterPermission() {
     setBusy(true);
+    pendingSource.current = "camera";
     try {
       if (!isNativePlatform()) {
         cameraInputRef.current?.click();
@@ -91,7 +94,7 @@ export function PhotoPicker({
         return;
       }
       const dataUrl = await capturePhoto("camera");
-      onPhoto(dataUrl);
+      onPhoto(dataUrl, "camera");
       setDenyMessage(null);
     } catch (err) {
       if (err instanceof CameraPermissionDeniedError) {
@@ -104,7 +107,6 @@ export function PhotoPicker({
       }
       const msg = err instanceof Error ? err.message : String(err);
       if (/cancel/i.test(msg)) return;
-      // Soft fallback to gallery so the flow never dead-ends
       setDenyMessage(
         "Couldn’t open the camera. Choose from Gallery instead."
       );
@@ -121,12 +123,12 @@ export function PhotoPicker({
       void runGallery();
       return;
     }
-    // Take Photo → explicit in-app rationale, then OS permission prompt
     if (isNativePlatform()) {
       setSheetMode("camera-rationale");
       return;
     }
     closeSheet();
+    pendingSource.current = "camera";
     cameraInputRef.current?.click();
   }
 
@@ -137,7 +139,7 @@ export function PhotoPicker({
     try {
       const url = await readPickedFile(file);
       if (url) {
-        onPhoto(url);
+        onPhoto(url, pendingSource.current);
         setDenyMessage(null);
       }
     } finally {
@@ -178,7 +180,6 @@ export function PhotoPicker({
         )}
       </div>
 
-      {/* Hidden web fallbacks */}
       <input
         ref={cameraInputRef}
         type="file"

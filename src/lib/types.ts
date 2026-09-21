@@ -20,6 +20,8 @@ export type Journey = {
   status: JourneyStatus;
 };
 
+export type CaptureSource = "camera" | "gallery";
+
 export type EvolutionLog = {
   id: string;
   journeyId: string;
@@ -28,6 +30,10 @@ export type EvolutionLog = {
   tags?: string[];
   createdAt: string;
   dayIndex: number;
+  /** Optional reference used during overlay align (Day1 or prior log). */
+  referenceLogId?: string;
+  /** How the photo was sourced. Defaults to gallery for legacy / demo seeds. */
+  captureSource?: CaptureSource;
 };
 
 export type BadgeId =

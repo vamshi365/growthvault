@@ -44,6 +44,8 @@ type AddLogInput = {
   photoUri: string;
   note?: string;
   tags?: string[];
+  referenceLogId?: string;
+  captureSource?: "camera" | "gallery";
 };
 
 type StoreValue = {
@@ -141,6 +143,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         tags: input.tags,
         createdAt: new Date().toISOString(),
         dayIndex,
+        referenceLogId: input.referenceLogId,
+        captureSource: input.captureSource ?? "gallery",
       };
       const updatedJourney: Journey = {
         ...journey,

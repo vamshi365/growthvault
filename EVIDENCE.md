@@ -197,3 +197,59 @@ Runtime: in-app rationale → `Camera.requestPermissions({ permissions: ['camera
 - `npm test` — **PASS** (22 tests)
 - `npm run build:apk` — **PASS** (next build + cap sync + assembleDebug)
 - P0.1–P0.10 UX polish retained; CREATOR tokens + ARCHITECT IA unchanged
+
+## v2.0 — Overlay + Compare — 2026-09-21 BST
+
+**Authority:** `/workspace/architect/growthvault-v2-blueprint.md` § v2.0  
+**Scope:** Overlay ghost capture + Compare A/B only. No paywall, widgets, share cards, ASO, social feed.
+
+### Routes
+
+| Route | Change |
+|-------|--------|
+| `/journeys/[id]/log` | After camera/gallery pick: **Align with overlay** toggle; Day1 / Last-log reference; opacity · flip · freeze; save with `referenceLogId` + `captureSource` |
+| `/journeys/[id]/compare` | Enhanced offline Compare: Day1 vs Today \| Log A vs B; `CompareSplit` with **DAY 1** / **TODAY** labels; timeline `LogCalendarStrip`; Swap; no Share CTA (v2.1) |
+| `/journeys/[id]/capture` | Alias → redirects to `/log` (overlay align lives post-capture) |
+
+### Overlay — true pixel (SENTINEL bar)
+
+- Implementation: **canvas `globalAlpha` drawImage** stacking ghost over base (`data-overlay-mode="canvas-alpha"`).
+- **Not** CSS `mix-blend-mode` / multiply / screen filters.
+- Unit proof: `compositePixelAlpha` (src·a + dst·(1−a)) in `src/lib/__tests__/overlay.test.ts`.
+- Controls: opacity slider (0–80%), flip horizontal, freeze ghost.
+- Downscale ghost for preview (`downscaleForOverlay`); full-res capture saved unchanged.
+- Missing Day1 + no logs → overlay disabled + CTA “Add Day 1 photo first”.
+- Local-first: photos IndexedDB only; no upload.
+
+### Compare — Day1 / Today labels
+
+- Mode pills: **Day 1 vs Today** | **Log A vs Log B**.
+- Split badges uppercase **DAY 1** / **TODAY** (or Day N in A/B mode).
+- Meta row: `Day 1 · …` / `Today · …`.
+- Timeline strip taps set A then B; offline only.
+- No cart, no social feed, no share compose (v2.1).
+
+### Data delta
+
+```ts
+EvolutionLog {
+  referenceLogId?: string;
+  captureSource?: "camera" | "gallery";
+}
+```
+
+### Gates
+
+- `npm test` — **PASS** (31 tests; overlay + db referenceLogId links)
+- `npm run build` — **PASS** (export; capture route included)
+- CREATOR tokens + P0 UX + camera deny→gallery retained
+
+### Android debug APK (v2.0)
+
+| Field | Value |
+|-------|--------|
+| Path | `/workspace/growthvault/dist/growthvault-debug.apk` |
+| Easy path | `/workspace/growthvault/GROWTHVAULT-DEBUG.apk` |
+| SHA256 | `6a8d658cda39f07aa80407a4a4dc29097e4ead15f33b1e97700a9da07a67f355` |
+| Size | `8609093` bytes (~8.21 MiB) |
+| Build | `npm run build` → `npx cap sync` → `./gradlew assembleDebug` |

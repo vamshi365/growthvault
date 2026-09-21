@@ -7,22 +7,80 @@ import { useStore } from "@/lib/store";
 import { EmptyState } from "@/components/ui";
 import { BackIcon } from "@/components/icons";
 import { dayKey } from "@/lib/streaks";
+import { CompareSplit } from "@/components/CompareSplit";
+import {
+  buildCompareSlots,
+  LogCalendarStrip,
+  type StripSlot,
+} from "@/components/LogCalendarStrip";
+
+type Mode = "day1_today" | "a_b";
+
+function resolveSlot(
+  slots: StripSlot[],
+  id: string | null
+): { uri: string; label: string; meta: string } | null {
+  if (!id) return null;
+  const slot = slots.find((s) => {
+    if (s.kind === "log") return s.log.id === id;
+    if (s.kind === "day1") return id === "day1";
+    return id === "today";
+  });
+  if (!slot) return null;
+  if (slot.kind === "log") {
+    return {
+      uri: slot.log.photoUri,
+      label: slot.label,
+      meta: dayKey(slot.log.createdAt),
+    };
+  }
+  return {
+    uri: slot.photoUri,
+    label: slot.label,
+    meta: slot.kind === "day1" ? "Start" : "Latest",
+  };
+}
 
 export default function ComparePage() {
   const params = useParams<{ id: string }>();
   const { snapshot } = useStore();
   const journey = snapshot.journeys.find((j) => j.id === params.id);
   const logs = useMemo(
-    () => snapshot.logs.filter((l) => l.journeyId === params.id),
+    () =>
+      snapshot.logs
+        .filter((l) => l.journeyId === params.id)
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        ),
     [snapshot.logs, params.id]
   );
 
-  const [left, setLeft] = useState(
-    () => journey?.day1PhotoUri ?? logs[logs.length - 1]?.photoUri ?? ""
+  const slots = useMemo(
+    () =>
+      journey
+        ? buildCompareSlots(
+            journey.day1PhotoUri,
+            journey.todayPhotoUri,
+            logs
+          )
+        : [],
+    [journey, logs]
   );
-  const [right, setRight] = useState(
-    () => journey?.todayPhotoUri ?? logs[0]?.photoUri ?? ""
-  );
+
+  const defaultA = journey?.day1PhotoUri ? "day1" : logs[0]?.id ?? null;
+  const defaultB =
+    logs.length > 0
+      ? logs[logs.length - 1].id
+      : journey?.todayPhotoUri
+        ? "today"
+        : defaultA;
+
+  const [mode, setMode] = useState<Mode>("day1_today");
+  const [sideA, setSideA] = useState<string | null>(defaultA);
+  const [sideB, setSideB] = useState<string | null>(defaultB);
+  const [picking, setPicking] = useState<"A" | "B">("A");
 
   if (!journey) {
     return (
@@ -37,86 +95,149 @@ export default function ComparePage() {
     );
   }
 
-  const leftDate = dayKey(journey.startedAt);
-  const rightDate = logs[0] ? dayKey(logs[0].createdAt) : "Today";
+  // Day1 vs Today mode locks sides
+  const effectiveA =
+    mode === "day1_today"
+      ? journey.day1PhotoUri
+        ? "day1"
+        : sideA
+      : sideA;
+  const effectiveB =
+    mode === "day1_today"
+      ? logs.length > 0
+        ? logs[logs.length - 1].id
+        : journey.todayPhotoUri
+          ? "today"
+          : sideB
+      : sideB;
+
+  const left = resolveSlot(slots, effectiveA);
+  const right = resolveSlot(slots, effectiveB);
+
+  function onStripSelect(id: string) {
+    if (mode === "day1_today") {
+      setMode("a_b");
+    }
+    if (picking === "A") {
+      setSideA(id);
+      setPicking("B");
+    } else {
+      setSideB(id);
+      setPicking("A");
+    }
+  }
+
+  function swap() {
+    setSideA(effectiveB);
+    setSideB(effectiveA);
+    if (mode === "day1_today") setMode("a_b");
+  }
 
   return (
     <div className="gv-page space-y-4">
       <header className="flex items-center gap-3">
         <Link
           href={`/journeys/${journey.id}`}
-          className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted"
+          className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted"
         >
           <BackIcon />
         </Link>
-        <h1 className="text-xl font-bold">Before vs After</h1>
+        <h1 className="text-xl font-bold">Compare</h1>
       </header>
 
-      <div className="overflow-hidden rounded-[28px] border border-gv-border">
-        <div className="grid grid-cols-2">
-          <div className="relative aspect-[3/4] bg-gv-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={left} alt="Before" className="h-full w-full object-cover" />
-          </div>
-          <div className="relative aspect-[3/4] bg-gv-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={right} alt="After" className="h-full w-full object-cover" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 bg-gv-card px-3 py-3 text-center text-xs text-gv-text-muted">
-          <span>{leftDate}</span>
-          <span>{rightDate}</span>
-        </div>
+      <div className="flex gap-1 rounded-full bg-gv-muted p-1">
+        <button
+          type="button"
+          onClick={() => setMode("day1_today")}
+          className={`min-h-[44px] flex-1 rounded-full px-3 text-xs font-semibold ${
+            mode === "day1_today"
+              ? "bg-gv-accent text-white"
+              : "text-gv-text-muted"
+          }`}
+        >
+          Day 1 vs Today
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("a_b")}
+          className={`min-h-[44px] flex-1 rounded-full px-3 text-xs font-semibold ${
+            mode === "a_b" ? "bg-gv-accent text-white" : "text-gv-text-muted"
+          }`}
+        >
+          Log A vs Log B
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="gv-pill cursor-pointer border border-gv-accent px-3 py-3 text-center text-xs font-semibold text-gv-accent-text">
-          Select image left
-          <select
-            className="mt-2 w-full rounded-lg bg-gv-muted px-2 py-1 text-gv-text"
-            value={left}
-            onChange={(e) => setLeft(e.target.value)}
-          >
-            {journey.day1PhotoUri && (
-              <option value={journey.day1PhotoUri}>Day 1</option>
-            )}
-            {logs.map((l) => (
-              <option key={l.id} value={l.photoUri}>
-                Day {l.dayIndex}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="gv-pill cursor-pointer border border-gv-accent px-3 py-3 text-center text-xs font-semibold text-gv-accent-text">
-          Select image right
-          <select
-            className="mt-2 w-full rounded-lg bg-gv-muted px-2 py-1 text-gv-text"
-            value={right}
-            onChange={(e) => setRight(e.target.value)}
-          >
-            {journey.todayPhotoUri && (
-              <option value={journey.todayPhotoUri}>Today</option>
-            )}
-            {logs.map((l) => (
-              <option key={l.id} value={l.photoUri}>
-                Day {l.dayIndex}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <CompareSplit
+        leftUri={left?.uri ?? ""}
+        rightUri={right?.uri ?? ""}
+        leftLabel={
+          mode === "day1_today"
+            ? "DAY 1"
+            : left?.label?.toUpperCase() ?? "A"
+        }
+        rightLabel={
+          mode === "day1_today"
+            ? "TODAY"
+            : right?.label?.toUpperCase() ?? "B"
+        }
+        leftMeta={
+          mode === "day1_today"
+            ? `Day 1 · ${left?.meta ?? "Start"}`
+            : left?.meta
+        }
+        rightMeta={
+          mode === "day1_today"
+            ? `Today · ${right?.meta ?? "Latest"}`
+            : right?.meta
+        }
+      />
 
-      <div className="flex justify-around text-sm text-gv-text-muted">
-        <button type="button" className="opacity-60" disabled>
-          Share
-        </button>
-        <button type="button" className="opacity-60" disabled>
-          Edit
-        </button>
-        <button type="button" className="opacity-60" disabled>
-          Save
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={swap}
+        className="min-h-[44px] w-full rounded-[22px] border border-gv-border bg-gv-muted px-4 text-sm font-semibold"
+      >
+        Swap A ↔ B
+      </button>
+
+      {mode === "a_b" && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPicking("A")}
+            className={`min-h-[40px] flex-1 rounded-full text-xs font-bold ${
+              picking === "A"
+                ? "bg-gv-accent text-white"
+                : "bg-gv-muted text-gv-text-muted"
+            }`}
+          >
+            Picking A
+          </button>
+          <button
+            type="button"
+            onClick={() => setPicking("B")}
+            className={`min-h-[40px] flex-1 rounded-full text-xs font-bold ${
+              picking === "B"
+                ? "bg-gv-accent text-white"
+                : "bg-gv-muted text-gv-text-muted"
+            }`}
+          >
+            Picking B
+          </button>
+        </div>
+      )}
+
+      <LogCalendarStrip
+        slots={slots}
+        selectedId={picking === "A" ? effectiveA : effectiveB}
+        activeSide={picking}
+        onSelect={onStripSelect}
+      />
+
+      <p className="text-center text-[11px] text-gv-text-muted">
+        Offline · photos stay on this device
+      </p>
     </div>
   );
 }

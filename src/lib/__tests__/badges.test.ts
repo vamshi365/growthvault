@@ -36,6 +36,7 @@ function log(
     photoUri: "data:,",
     createdAt: d.toISOString(),
     dayIndex,
+    captureSource: "gallery",
   };
 }
 

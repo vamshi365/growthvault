@@ -62,6 +62,8 @@ export function buildDemoSnapshot(): AppSnapshot {
       tags: i === 0 ? ["start"] : ["progress"],
       createdAt: daysAgo(n),
       dayIndex: 7 - n,
+      captureSource: i === 0 ? "camera" : "gallery",
+      referenceLogId: i === 0 ? undefined : logs[0]?.id,
     });
   }
 

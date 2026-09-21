@@ -14,6 +14,7 @@ function log(createdAt: string, id = "l1"): EvolutionLog {
     photoUri: "data:,",
     createdAt,
     dayIndex: 1,
+    captureSource: "gallery" as const,
   };
 }
 
