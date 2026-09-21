@@ -24,6 +24,20 @@
   --gv-font: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
   --gv-missed-bg: #3A2024;
   --gv-missed-text: #FF8A80;
+  --gv-focus: #E8D9FF;
+  --gv-card-highlight: rgba(255,255,255,0.04);
+  --gv-card-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  --gv-fab-glow: 0 8px 28px rgba(159,132,255,0.55), 0 0 0 1px rgba(159,132,255,0.25);
+  --gv-space-1: 8px;
+  --gv-space-2: 12px;
+  --gv-space-3: 16px;
+  --gv-space-4: 20px;
+  --gv-space-5: 24px;
+  --gv-title: 28px;
+  --gv-section: 18px;
+  --gv-body: 14px;
+  --gv-metric: 32px;
+  --gv-eyebrow: 11px;
 }
 
 @theme inline {
@@ -80,11 +94,15 @@ select {
 .gv-card {
   background: var(--gv-surface);
   border-radius: var(--gv-radius-card);
+  border: 1px solid var(--gv-border);
+  box-shadow: var(--gv-card-shadow);
+  background-image: linear-gradient(180deg, var(--gv-card-highlight), transparent 40%);
 }
 
 .gv-tile {
   background: var(--gv-surface);
   border-radius: var(--gv-radius-tile);
+  border: 1px solid var(--gv-border);
 }
 
 .gv-pill {
@@ -97,20 +115,69 @@ select {
   border: none;
   border-radius: var(--gv-radius-pill);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  min-height: 52px;
 }
 
 .gv-eyebrow {
-  font-size: 11px;
+  font-size: var(--gv-eyebrow);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
+.gv-title {
+  font-size: var(--gv-title);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.gv-section-title {
+  font-size: var(--gv-section);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.gv-metric {
+  font-size: var(--gv-metric);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
 .gv-page {
-  padding: 20px 20px calc(108px + env(safe-area-inset-bottom, 0px));
+  padding: var(--gv-space-4) var(--gv-space-4) calc(116px + env(safe-area-inset-bottom, 0px));
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gv-space-3);
+}
+
+.gv-toast {
+  border-radius: var(--gv-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gv-fab {
+  box-shadow: var(--gv-fab-glow);
+}
+
+.gv-progress {
+  height: 6px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gv-focus);
+  outline-offset: 2px;
+}
+
+button,
+a,
+[role="button"] {
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -119,5 +186,8 @@ select {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .gv-fab {
+    transition: none !important;
   }
 }

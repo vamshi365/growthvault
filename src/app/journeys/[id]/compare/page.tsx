@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { EmptyState } from "@/components/ui";
 import { BackIcon } from "@/components/icons";
 import { dayKey } from "@/lib/streaks";
 
@@ -25,11 +26,13 @@ export default function ComparePage() {
 
   if (!journey) {
     return (
-      <div className="gv-page flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <p className="text-lg font-bold">Journey not found</p>
-        <Link href="/home" className="gv-cta px-6 py-3 text-sm">
-          Back to Home
-        </Link>
+      <div className="gv-page">
+        <EmptyState
+          title="Journey not found"
+          body="This journey id is missing or was cleared from local storage."
+          actionHref="/home"
+          actionLabel="Back to Home"
+        />
       </div>
     );
   }

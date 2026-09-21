@@ -16,13 +16,17 @@ export default function StatsPage() {
   }, [snapshot]);
 
   if (!ready) {
-    return <div className="gv-page text-gv-text-muted">Loading…</div>;
+    return (
+      <div className="gv-page flex min-h-[60vh] items-center justify-center text-gv-text-muted">
+        Loading vault…
+      </div>
+    );
   }
 
   return (
-    <div className="gv-page space-y-4">
+    <div className="gv-page">
       <header>
-        <h1 className="text-[28px] font-bold">Growth Insights</h1>
+        <h1 className="gv-title">Growth Insights</h1>
         <p className="mt-1 text-sm text-gv-text-muted">
           Your transformation by the numbers.
         </p>

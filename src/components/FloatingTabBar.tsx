@@ -41,31 +41,34 @@ export function FloatingTabBar() {
     <>
       {sheetOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60"
+          className="fixed inset-0 z-40 bg-black/60 transition-opacity duration-200"
+          role="presentation"
           onClick={() => setSheetOpen(false)}
         >
           <div
-            className="absolute bottom-[100px] left-1/2 w-[min(400px,calc(100%-40px))] -translate-x-1/2 rounded-[28px] border border-gv-border bg-gv-card p-4 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Quick actions"
+            className="absolute bottom-[100px] left-1/2 w-[min(400px,calc(100%-40px))] -translate-x-1/2 rounded-[28px] border border-gv-border bg-gv-card p-4 shadow-2xl transition-transform duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="gv-eyebrow mb-3 text-gv-accent-text">Quick actions</p>
             <button
               type="button"
-              className="mb-2 flex w-full items-center justify-between rounded-[22px] bg-gv-muted px-4 py-4 text-left font-semibold"
+              className="gv-cta mb-2 flex w-full items-center justify-center gap-2 px-4 text-sm"
               onClick={() => {
                 setSheetOpen(false);
                 router.push("/journeys/new");
               }}
             >
               New Journey
-              <span className="text-gv-accent">→</span>
             </button>
             <button
               type="button"
               disabled={!hasJourneys}
-              className={`flex w-full items-center justify-between rounded-[22px] px-4 py-4 text-left font-semibold ${
+              className={`flex w-full min-h-[44px] items-center justify-between rounded-[22px] px-4 py-3 text-left font-semibold ${
                 hasJourneys
-                  ? "bg-gv-muted"
+                  ? "border border-gv-border bg-gv-muted"
                   : "cursor-not-allowed bg-gv-muted/50 text-gv-text-muted"
               }`}
               onClick={() => {
@@ -92,11 +95,10 @@ export function FloatingTabBar() {
       )}
 
       <nav
-        className="fixed bottom-4 left-1/2 z-50 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 items-end justify-between rounded-[28px] border border-gv-border bg-[rgba(18,18,24,0.92)] px-2 pb-2 pt-2 shadow-[0_12px_40px_rgba(0,0,0,0.45)] backdrop-blur-md"
+        className="fixed bottom-4 left-1/2 z-50 flex w-[min(420px,calc(100%-24px))] -translate-x-1/2 items-end justify-between rounded-[28px] border border-gv-border bg-[rgba(18,18,24,0.92)] px-2 pb-2 pt-2 shadow-[0_12px_40px_rgba(0,0,0,0.45)] ring-1 ring-[rgba(159,132,255,0.12)] backdrop-blur-md"
         style={{ paddingBottom: "calc(8px + env(safe-area-inset-bottom, 0px))" }}
         aria-label="Main"
       >
-        {/* Left pair */}
         <div className="flex flex-1 justify-around">
           {TABS.slice(0, 2).map(({ href, label, Icon }) => {
             const active = isActive(href);
@@ -104,11 +106,19 @@ export function FloatingTabBar() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-1 px-2 py-1 ${
+                className={`flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 px-2 py-1 ${
                   active ? "text-gv-accent" : "text-gv-text-muted"
                 }`}
               >
-                <Icon />
+                <span
+                  className={
+                    active
+                      ? "rounded-[14px] bg-[rgba(159,132,255,0.15)] p-1"
+                      : "p-1"
+                  }
+                >
+                  <Icon />
+                </span>
                 <span className="text-[10px] font-semibold tracking-[0.06em]">
                   {label}
                 </span>
@@ -122,20 +132,18 @@ export function FloatingTabBar() {
           })}
         </div>
 
-        {/* FAB */}
         <div className="relative mx-1 flex w-16 justify-center">
           <button
             type="button"
             aria-label="Add"
             onClick={() => setSheetOpen(true)}
-            className="absolute -top-7 flex h-14 w-14 items-center justify-center rounded-full bg-gv-accent text-white shadow-[0_8px_24px_rgba(159,132,255,0.45)]"
+            className="gv-fab absolute -top-7 flex h-14 w-14 min-h-[56px] min-w-[56px] items-center justify-center rounded-full bg-gv-accent text-white"
           >
             <PlusIcon />
           </button>
           <div className="h-10" />
         </div>
 
-        {/* Right pair */}
         <div className="flex flex-1 justify-around">
           {TABS.slice(2).map(({ href, label, Icon }) => {
             const active = isActive(href);
@@ -143,15 +151,15 @@ export function FloatingTabBar() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-1 px-2 py-1 ${
+                className={`flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 px-2 py-1 ${
                   active ? "text-gv-accent" : "text-gv-text-muted"
                 }`}
               >
                 <span
                   className={
-                    active && href === "/awards"
+                    active
                       ? "rounded-[14px] bg-[rgba(159,132,255,0.15)] p-1"
-                      : ""
+                      : "p-1"
                   }
                 >
                   <Icon />

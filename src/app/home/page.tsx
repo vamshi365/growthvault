@@ -25,7 +25,7 @@ export default function HomePage() {
 
   if (!ready) {
     return (
-      <div className="gv-page flex items-center justify-center text-gv-text-muted">
+      <div className="gv-page flex min-h-[60vh] items-center justify-center text-gv-text-muted">
         Loading vault…
       </div>
     );
@@ -34,7 +34,7 @@ export default function HomePage() {
   const hasJourneys = active.length > 0;
 
   return (
-    <div className="gv-page space-y-4">
+    <div className="gv-page">
       <header className="flex items-start justify-between gap-3">
         <div>
           {hasJourneys && primary ? (
@@ -44,7 +44,7 @@ export default function HomePage() {
           ) : (
             <p className="text-sm text-gv-text-muted">Welcome back,</p>
           )}
-          <h1 className="text-[28px] font-bold leading-tight">GrowthVault</h1>
+          <h1 className="gv-title">GrowthVault</h1>
         </div>
         <ProfileButton />
       </header>
@@ -68,14 +68,16 @@ export default function HomePage() {
       <QuickStatPair streak={streak} logs={snapshot.logs.length} />
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold">Active Journeys</h2>
-          <Link
-            href="/journeys/new"
-            className="gv-pill border border-gv-border px-3 py-1.5 text-xs font-semibold text-gv-accent-text"
-          >
-            + New
-          </Link>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="gv-section-title">Active Journeys</h2>
+          {hasJourneys && (
+            <Link
+              href="/journeys/new"
+              className="gv-pill inline-flex min-h-[44px] items-center border border-gv-border px-4 text-xs font-semibold text-gv-accent-text"
+            >
+              + New
+            </Link>
+          )}
         </div>
 
         {!hasJourneys ? (
@@ -84,9 +86,10 @@ export default function HomePage() {
             body="Document Day 1. Come back for Today. Build your vault."
             actionHref="/journeys/new"
             actionLabel="Begin Journey"
+            hint="Takes under a minute"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {active.map((j) => (
               <JourneyListCard
                 key={j.id}

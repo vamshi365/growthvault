@@ -4,15 +4,19 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { CloseIcon, CameraIcon } from "@/components/icons";
-import { GradientCtaButton } from "@/components/ui";
+import { currentStreak } from "@/lib/streaks";
+import { CloseIcon } from "@/components/icons";
+import { PhotoPicker } from "@/components/PhotoPicker";
+import { useToast, vibrateOnce } from "@/components/Toast";
+import { EmptyState } from "@/components/ui";
 
 const TAG_OPTIONS = ["progress", "milestone", "mindset", "setback", "win"];
 
 export default function LogEvolutionPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { snapshot, addLog, readPhotoFile } = useStore();
+  const { snapshot, addLog, ready } = useStore();
+  const { toast } = useToast();
   const journeys = snapshot.journeys.filter((j) => j.status === "active");
 
   const [journeyId, setJourneyId] = useState(params.id);
@@ -20,7 +24,6 @@ export default function LogEvolutionPage() {
   const [note, setNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const journey = useMemo(
     () => snapshot.journeys.find((j) => j.id === journeyId),
@@ -33,37 +36,54 @@ export default function LogEvolutionPage() {
     );
   }
 
-  async function onPhoto(file: File | null) {
-    if (!file) return;
-    setPhoto(await readPhotoFile(file));
-  }
-
   async function onSave() {
     if (!photo || !journey || busy) return;
     setBusy(true);
-    setError(null);
+    const prevStreak = currentStreak(snapshot.logs);
     try {
-      await addLog({
+      const log = await addLog({
         journeyId,
         photoUri: photo,
         note,
         tags,
       });
+      vibrateOnce();
+      toast("Evolution logged");
+      const nextStreak = currentStreak([log, ...snapshot.logs]);
+      if (nextStreak > prevStreak) {
+        window.setTimeout(
+          () => toast(`🔥 Streak · ${nextStreak} days`, "info"),
+          400
+        );
+      }
       router.push(`/journeys/${journeyId}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save log");
+    } catch {
+      toast("Couldn’t save — try again", "error");
       setBusy(false);
     }
+  }
+
+  if (ready && !journey && params.id !== "_") {
+    return (
+      <div className="gv-page">
+        <EmptyState
+          title="Journey not found"
+          body="This journey id is missing or was cleared from local storage."
+          actionHref="/home"
+          actionLabel="Back to Home"
+        />
+      </div>
+    );
   }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-4 sm:items-center">
       <div className="gv-card w-full max-w-[440px] space-y-4 p-5">
-        <div className="flex items-center justify-between">
+        <div className="flex min-h-[44px] items-center justify-between">
           <h1 className="text-lg font-bold">Log Evolution</h1>
           <Link
             href={journey ? `/journeys/${journey.id}` : "/home"}
-            className="text-gv-text-muted"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center text-gv-text-muted"
             aria-label="Close"
           >
             <CloseIcon />
@@ -87,29 +107,11 @@ export default function LogEvolutionPage() {
           </label>
         )}
 
-        <label className="flex cursor-pointer flex-col items-center gap-2 overflow-hidden rounded-[22px] border border-dashed border-gv-border bg-gv-muted p-4">
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={photo}
-              alt="Preview"
-              className="max-h-56 w-full rounded-[16px] object-cover"
-            />
-          ) : (
-            <>
-              <CameraIcon className="text-gv-accent" />
-              <span className="text-sm text-gv-text-muted">
-                Upload photo (file picker)
-              </span>
-            </>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => void onPhoto(e.target.files?.[0] ?? null)}
-          />
-        </label>
+        <PhotoPicker
+          photo={photo}
+          onPhoto={setPhoto}
+          emptyLabel="Tap to add photo · camera or gallery"
+        />
 
         <label className="block space-y-2">
           <span className="gv-eyebrow text-gv-accent-text">Caption</span>
@@ -130,7 +132,7 @@ export default function LogEvolutionPage() {
                 key={t}
                 type="button"
                 onClick={() => toggleTag(t)}
-                className={`gv-pill px-3 py-1.5 text-xs font-semibold capitalize ${
+                className={`gv-pill min-h-[44px] px-4 text-xs font-semibold capitalize ${
                   tags.includes(t)
                     ? "bg-gv-accent text-white"
                     : "bg-gv-card text-gv-text-muted"
@@ -142,19 +144,17 @@ export default function LogEvolutionPage() {
           </div>
         </div>
 
-        {error && <p className="text-sm text-[#FF8A80]">{error}</p>}
-
         <button
           type="button"
           disabled={!photo || busy}
           onClick={() => void onSave()}
-          className="w-full rounded-full bg-gv-accent py-3.5 text-sm font-bold uppercase tracking-wider text-white disabled:opacity-50"
+          className="w-full min-h-[52px] rounded-full bg-gv-accent py-3.5 text-sm font-bold uppercase tracking-wider text-white disabled:opacity-50"
         >
           {busy ? "Saving…" : "Save"}
         </button>
         <Link
           href={journey ? `/journeys/${journey.id}` : "/home"}
-          className="block text-center text-sm text-gv-text-muted"
+          className="flex min-h-[44px] items-center justify-center text-sm text-gv-text-muted"
         >
           Close
         </Link>

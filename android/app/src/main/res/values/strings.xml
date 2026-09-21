@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GrowthVault</string>
+    <string name="title_activity_main">GrowthVault</string>
+    <string name="package_name">com.growthvault.app</string>
+    <string name="custom_url_scheme">com.growthvault.app</string>
+</resources>

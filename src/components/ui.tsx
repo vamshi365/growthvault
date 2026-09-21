@@ -7,9 +7,9 @@ import { BoltIcon, FlameIcon, SparkleIcon, UserIcon } from "./icons";
 
 export function ProgressBar({ value }: { value: number }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gv-track">
+    <div className="gv-progress h-[6px] w-full overflow-hidden rounded-full bg-gv-track">
       <div
-        className="h-full rounded-full bg-gv-accent transition-[width] duration-300"
+        className="h-full rounded-full bg-gv-accent transition-[width] duration-300 ease-out"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>
@@ -21,23 +21,33 @@ export function EmptyState({
   body,
   actionHref,
   actionLabel,
+  hint,
 }: {
   title: string;
   body: string;
   actionHref?: string;
   actionLabel?: string;
+  hint?: string;
 }) {
   return (
-    <div className="gv-card px-5 py-8 text-center">
-      <p className="text-lg font-bold">{title}</p>
-      <p className="mt-2 text-sm italic text-gv-text-muted">{body}</p>
+    <div className="gv-card flex flex-col items-center px-5 py-8 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[16px] bg-[rgba(159,132,255,0.18)] text-gv-accent">
+        <SparkleIcon />
+      </div>
+      <p className="gv-section-title">{title}</p>
+      <p className="mt-2 max-w-xs text-[14px] italic leading-relaxed text-gv-text-muted">
+        {body}
+      </p>
       {actionHref && actionLabel && (
         <Link
           href={actionHref}
-          className="gv-cta mt-5 inline-block px-6 py-3 text-sm"
+          className="gv-cta mt-5 flex w-full max-w-sm items-center justify-center px-6 text-sm"
         >
           {actionLabel}
         </Link>
+      )}
+      {hint && (
+        <p className="mt-2 text-xs text-gv-text-muted">{hint}</p>
       )}
     </div>
   );
@@ -77,16 +87,18 @@ export function QuickStatPair({
       <div className="gv-tile p-4">
         <p className="gv-eyebrow text-gv-accent">Streak</p>
         <div className="mt-2 flex items-end gap-2">
-          <span className="text-3xl font-bold">{streak}</span>
+          <span className="gv-metric">{streak}</span>
           <FlameIcon className="mb-1 text-gv-flame" />
         </div>
+        <p className="mt-1 text-[10px] text-gv-text-muted">Vault total</p>
       </div>
       <div className="gv-tile p-4">
         <p className="gv-eyebrow text-gv-accent">Growth Logs</p>
         <div className="mt-2 flex items-end gap-2">
-          <span className="text-3xl font-bold">{logs}</span>
+          <span className="gv-metric">{logs}</span>
           <BoltIcon className="mb-1 text-gv-accent" />
         </div>
+        <p className="mt-1 text-[10px] text-gv-text-muted">Vault total</p>
       </div>
     </div>
   );
@@ -94,7 +106,7 @@ export function QuickStatPair({
 
 export function CategoryPill({ label }: { label: string }) {
   return (
-    <span className="gv-pill border border-[rgba(159,132,255,0.35)] bg-[rgba(159,132,255,0.12)] px-2.5 py-1 text-[10px] font-bold tracking-[0.06em] text-gv-accent-text">
+    <span className="gv-pill inline-flex min-h-[28px] items-center border border-[rgba(159,132,255,0.35)] bg-[rgba(159,132,255,0.12)] px-2.5 py-1 text-[10px] font-bold tracking-[0.06em] text-gv-accent-text">
       {label.toUpperCase()}
     </span>
   );
@@ -111,8 +123,8 @@ export function HeroSplitCard({
 }) {
   const day = daysSinceStart(journey.startedAt);
   return (
-    <Link href={`/journeys/${journey.id}`} className="block">
-      <div className="relative overflow-hidden rounded-[28px]">
+    <Link href={`/journeys/${journey.id}`} className="block min-h-0">
+      <div className="relative overflow-hidden rounded-[28px] border border-gv-border shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
         <div className="grid grid-cols-2">
           <div className="relative aspect-[3/4] bg-gv-muted">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -137,13 +149,21 @@ export function HeroSplitCard({
             </span>
           </div>
         </div>
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-16">
+        <div
+          className="absolute inset-x-0 bottom-0 px-4 pb-4 pt-20"
+          style={{
+            background:
+              "linear-gradient(transparent, rgba(0,0,0,0.75) 45%, rgba(0,0,0,0.92))",
+          }}
+        >
           <CategoryPill
             label={
               journey.category === "Fitness" ? "Growth Seeker" : journey.category
             }
           />
-          <h2 className="mt-2 text-xl font-bold leading-tight">{journey.title}</h2>
+          <h2 className="mt-2 text-xl font-bold leading-tight text-white">
+            {journey.title}
+          </h2>
           <div className="mt-2 flex items-center gap-4 text-sm text-white/90">
             <span className="inline-flex items-center gap-1">
               <FlameIcon className="text-gv-flame" size={16} />
@@ -173,7 +193,7 @@ export function JourneyListCard({
   return (
     <Link
       href={`/journeys/${journey.id}`}
-      className="gv-card flex items-center gap-3 p-3"
+      className="gv-card flex min-h-[72px] items-center gap-3 p-3"
     >
       <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[16px] bg-gv-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -184,7 +204,7 @@ export function JourneyListCard({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <CategoryPill label={journey.category} />
           <span className="rounded-full bg-gv-muted px-2 py-0.5 text-[10px] text-gv-text-muted">
             Day {day}
@@ -192,7 +212,7 @@ export function JourneyListCard({
         </div>
         <p className="mt-1 truncate font-semibold">{journey.title}</p>
         <div className="mt-2">
-          <div className="mb-1 flex justify-between text-[10px] font-bold tracking-wider text-gv-text-muted">
+          <div className="mb-1 flex justify-between text-[11px] font-bold tracking-wider text-[#A1A1AA]">
             <span>PROGRESS</span>
             <span>
               {latest} / {journey.durationDays}
@@ -210,7 +230,7 @@ export function ProfileButton() {
     <Link
       href="/profile"
       aria-label="Profile"
-      className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-text-muted"
+      className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-text-muted"
     >
       <UserIcon />
     </Link>
@@ -253,11 +273,9 @@ export function MetricCard({
 }) {
   return (
     <div className="gv-tile p-4">
-      <div className="flex items-start justify-between">
-        <p className="gv-eyebrow text-gv-text-muted">{label}</p>
-        <span className={iconClass}>{icon}</span>
-      </div>
-      <p className="mt-3 text-4xl font-bold">{value}</p>
+      <span className={iconClass}>{icon}</span>
+      <p className="gv-eyebrow mt-2 text-gv-text-muted">{label}</p>
+      <p className="gv-metric mt-2">{value}</p>
     </div>
   );
 }
@@ -270,7 +288,7 @@ export function ActivityBarChart({
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <div className="gv-card p-5">
-      <p className="text-lg font-bold">Activity per Journey</p>
+      <p className="gv-section-title">Activity per Journey</p>
       {items.length === 0 ? (
         <p className="mt-4 text-sm italic text-gv-text-muted">
           No journeys yet. Start one to see activity.
@@ -278,14 +296,18 @@ export function ActivityBarChart({
       ) : (
         <div className="mt-5 flex items-end gap-3" style={{ minHeight: 140 }}>
           {items.map((item) => (
-            <div key={item.label} className="flex flex-1 flex-col items-center gap-2">
+            <div
+              key={item.label}
+              className="flex flex-1 flex-col items-center gap-2"
+              title={item.label}
+            >
               <span className="text-xs font-semibold text-gv-accent-text">
                 {item.value}
               </span>
               <div
-                className="w-full max-w-[48px] rounded-t-2xl rounded-b-md bg-gv-accent"
+                className="w-full max-w-[48px] rounded-t-2xl bg-gv-accent"
                 style={{
-                  height: `${Math.max(8, (item.value / max) * 110)}px`,
+                  height: `${Math.max(4, (item.value / max) * 110)}px`,
                 }}
               />
               <span className="max-w-full truncate text-center text-[10px] text-gv-text-muted">

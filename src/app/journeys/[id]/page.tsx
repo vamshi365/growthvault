@@ -17,6 +17,7 @@ import {
 } from "@/components/icons";
 import {
   CategoryPill,
+  EmptyState,
   LogThumb,
   ProgressBar,
 } from "@/components/ui";
@@ -40,14 +41,13 @@ export default function JourneyDetailPage() {
   }
   if (!journey) {
     return (
-      <div className="gv-page flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <p className="text-lg font-bold">Journey not found</p>
-        <p className="max-w-xs text-sm text-gv-text-muted">
-          This journey id is missing or was cleared from local storage.
-        </p>
-        <Link href="/home" className="gv-cta px-6 py-3 text-sm">
-          Back to Home
-        </Link>
+      <div className="gv-page">
+        <EmptyState
+          title="Journey not found"
+          body="This journey id is missing or was cleared from local storage."
+          actionHref="/home"
+          actionLabel="Back to Home"
+        />
       </div>
     );
   }

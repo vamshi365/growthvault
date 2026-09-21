@@ -17,24 +17,28 @@ export default function AwardsPage() {
   const next = nextIncompleteBadge(snapshot.badges);
 
   if (!ready) {
-    return <div className="gv-page text-gv-text-muted">Loading…</div>;
+    return (
+      <div className="gv-page flex min-h-[60vh] items-center justify-center text-gv-text-muted">
+        Loading vault…
+      </div>
+    );
   }
 
   return (
-    <div className="gv-page space-y-4">
-      <header className="flex items-start justify-between">
+    <div className="gv-page">
+      <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[28px] font-bold">Vault Awards</h1>
+          <h1 className="gv-title">Vault Awards</h1>
           <p className="mt-1 text-sm text-gv-text-muted">
             Earn badges for your consistency.
           </p>
         </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-gv-accent text-gv-accent">
+        <div className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-accent text-gv-accent">
           <AwardsIcon />
         </div>
       </header>
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {BADGE_ORDER.map((id) => {
           const meta = BADGE_META[id];
           const progress =
@@ -47,7 +51,13 @@ export default function AwardsPage() {
           const unlocked = Boolean(progress.unlockedAt);
           return (
             <div key={id} className="gv-card flex items-center gap-3 p-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent">
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted ${
+                  unlocked
+                    ? "text-gv-accent"
+                    : "text-gv-text-muted opacity-60"
+                }`}
+              >
                 <AwardsIcon size={20} />
               </div>
               <div className="min-w-0 flex-1">
@@ -55,17 +65,17 @@ export default function AwardsPage() {
                 <p className="text-xs text-gv-text-muted">{meta.description}</p>
                 {!unlocked && (
                   <div className="mt-2">
-                    <p className="mb-1 text-[10px] font-bold tracking-wider text-gv-text-muted">
-                      {progress.current} / {progress.target} PROGRESS
-                    </p>
                     <ProgressBar
                       value={(progress.current / progress.target) * 100}
                     />
+                    <p className="gv-eyebrow mt-1.5 text-[#A1A1AA]">
+                      {progress.current} / {progress.target} PROGRESS
+                    </p>
                   </div>
                 )}
               </div>
               {unlocked ? (
-                <span className="gv-pill shrink-0 bg-[rgba(159,132,255,0.18)] px-2.5 py-1 text-[10px] font-bold tracking-wider text-gv-accent-text">
+                <span className="gv-pill shrink-0 bg-[rgba(159,132,255,0.2)] px-2.5 py-1 text-[10px] font-bold tracking-wider text-gv-accent-text">
                   Unlocked
                 </span>
               ) : null}
@@ -74,7 +84,7 @@ export default function AwardsPage() {
         })}
       </div>
 
-      <div className="rounded-[28px] bg-gv-accent p-5 text-white">
+      <div className="mt-2 rounded-[28px] bg-gv-accent p-5 text-white">
         <p className="text-sm font-semibold italic tracking-wide opacity-90">
           KEEP BUILDING
         </p>
@@ -84,14 +94,14 @@ export default function AwardsPage() {
           ”
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-[16px] bg-white/15 p-3">
-            <p className="gv-eyebrow text-white/70">Next Goal</p>
+          <div className="rounded-[16px] bg-white/10 p-3">
+            <p className="gv-eyebrow text-white/80">Next Goal</p>
             <p className="mt-1 text-sm font-bold">
               {next ? BADGE_META[next.id].title : "All unlocked"}
             </p>
           </div>
-          <div className="rounded-[16px] bg-white/15 p-3">
-            <p className="gv-eyebrow text-white/70">Total Medals</p>
+          <div className="rounded-[16px] bg-white/10 p-3">
+            <p className="gv-eyebrow text-white/80">Total Medals</p>
             <p className="mt-1 text-sm font-bold">
               {medals} / {BADGE_ORDER.length}
             </p>
