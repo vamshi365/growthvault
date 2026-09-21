@@ -14,6 +14,7 @@ import {
   CompareIcon,
   GridIcon,
   ListIcon,
+  ShareIcon,
 } from "@/components/icons";
 import {
   CategoryPill,
@@ -75,17 +76,25 @@ export default function JourneyDetailPage() {
         <div className="flex gap-2">
           <Link
             href={`/journeys/${journey.id}/calendar`}
-            className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent"
+            className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent"
             aria-label="Calendar"
           >
             <CalendarIcon />
           </Link>
           <Link
             href={`/journeys/${journey.id}/compare`}
-            className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent"
+            className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent"
             aria-label="Compare"
           >
             <CompareIcon />
+          </Link>
+          <Link
+            href={`/share/compose?journeyId=${encodeURIComponent(journey.id)}&template=before_after`}
+            className="flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-[16px] border border-gv-border bg-gv-muted text-gv-accent"
+            aria-label="Share card"
+            data-share-entry="journey"
+          >
+            <ShareIcon />
           </Link>
         </div>
       </header>

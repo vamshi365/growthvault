@@ -255,3 +255,79 @@ EvolutionLog {
 | Build | `npm run build` → `npx cap sync` → `./gradlew assembleDebug` |
 | Commit | `84a2dc90ad821abac1e6769f93b1c1ff86ab4efe` on `main` |
 | URL | https://github.com/vamshi365/growthvault/commit/84a2dc90ad821abac1e6769f93b1c1ff86ab4efe |
+
+## v2.1 — Share-out cards — 2026-09-21 BST
+
+**Authority:** `/workspace/architect/growthvault-v2-blueprint.md` § v2.1  
+**Craft:** `/workspace/creator/growthvault-share-cards.md` (Templates A–D)  
+**Scope:** Share-out PNG cards + system share only. No in-app social feed. No paywall UI. Camera/overlay/P0/tokens retained. Live viewfinder ghost not in scope.
+
+### Routes
+
+| Route | Change |
+|-------|--------|
+| `/share/compose` | Composer: `journeyId`, `logIds`, `template`; Templates A–D; Stories 1080×1920 + Square 1080×1080; optional caption; Share → system sheet; Cancel = quiet |
+| `/journeys/[id]/compare` | **Share card** CTA → compose (`template=before_after`, logIds from A/B) |
+| `/journeys/[id]` | Header **Share** entry → compose |
+
+### Templates (CREATOR A–D)
+
+| Letter | Id | Layout |
+|--------|-----|--------|
+| A | `before_after` | Day 1 / Today split, journey title, Day N, “Private vault · On my phone” |
+| B | `streak` | Flame + huge streak + DAY STREAK |
+| C | `award` | Latest unlocked badge · UNLOCKED pill |
+| D | `quote` | Photo top 55% + Evolution Insight quote card |
+
+Brand lock: `#0B0B10` / `#9F84FF` / Inter / GrowthVault wordmark + accent rule. **No** encryption / vault-lock claims on export art. **No** feed / followers / likes.
+
+### Export + share
+
+- Canvas → PNG (`renderShareCardPng`)
+- System share: `navigator.share({ files })` and/or `@capacitor/share@6.0.3`; download fallback
+- Cancel / `AbortError` → silent (no shame toast)
+- Success → local `shareEvents++` (IndexedDB meta) + toast “Card ready to send”
+- Cards use **real journey photo URIs** (Day1/Today/logs) — not stock placeholders
+
+### CREATOR PNG re-sniff — READY
+
+Sample PNGs (demo journey art, same chrome as compose):
+
+- `/workspace/growthvault/share-samples/A-before-after-stories.png`
+- `/workspace/growthvault/share-samples/A-before-after-square.png`
+- `/workspace/growthvault/share-samples/B-streak-stories.png`
+- `/workspace/growthvault/share-samples/C-award-stories.png`
+- `/workspace/growthvault/share-samples/D-quote-stories.png`
+
+Also under `dist/share-samples/`. Compose route live after `npm run build && npx next start -p 4330` → `/share/compose?journeyId=…`.
+
+### SENTINEL bar
+
+1. System share sheet only — no in-app feed/followers  
+2. Cards render real journey data (`resolveSharePhotos`)  
+3. Cancel = quiet exit  
+4. No “encrypted vault” claims on export art  
+
+### Data delta
+
+```ts
+ShareEvent { id, createdAt, templateId, journeyId, logIds[] }
+AppSnapshot.shareEvents: ShareEvent[]
+```
+
+### Gates
+
+- `npm test` — **PASS** (42 tests; share A–D + shareEvents persistence)
+- `npm run build` — **PASS** (`/share/compose` exported)
+- CREATOR tokens + P0 + camera + overlay/compare retained
+
+### Android debug APK (v2.1)
+
+| Field | Value |
+|-------|--------|
+| Path | `/workspace/growthvault/dist/growthvault-debug.apk` |
+| Easy path | `/workspace/growthvault/GROWTHVAULT-DEBUG.apk` |
+| SHA256 | `752fec7d1d4920fa3ed065de97332035b4c8913c8dd37548eb67cf3bdf4fd799` |
+| Size | `8609919` bytes (~8.21 MiB) |
+| Plugins | `@capacitor/camera@6.1.3` · `@capacitor/share@6.0.3` |
+| Build | `npm run build` → `npx cap sync` → `./gradlew assembleDebug` |

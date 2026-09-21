@@ -53,6 +53,7 @@ describe("IndexedDB CRUD", () => {
     expect(snap.journeys).toEqual([]);
     expect(snap.logs).toEqual([]);
     expect(snap.badges).toHaveLength(5);
+    expect(snap.shareEvents).toEqual([]);
   });
 
   it("creates and reads a journey (putJourney)", async () => {
@@ -98,6 +99,7 @@ describe("IndexedDB CRUD", () => {
       journeys: [makeJourney("new")],
       logs: [makeLog("new", "l_new")],
       badges: initialBadges(),
+      shareEvents: [],
     });
     const snap = await loadSnapshot();
     expect(snap.profile.displayName).toBe("Fresh");
@@ -117,6 +119,20 @@ describe("IndexedDB CRUD", () => {
     const snap = await loadSnapshot();
     expect(snap.logs[0].referenceLogId).toBe("l_parent");
     expect(snap.logs[0].captureSource).toBe("camera");
+  });
+
+  it("persists shareEvents for future paywall counter", async () => {
+    const { appendShareEvent, loadSnapshot: load } = await import("@/lib/db");
+    await appendShareEvent({
+      id: "share_1",
+      createdAt: new Date().toISOString(),
+      templateId: "before_after",
+      journeyId: "j1",
+      logIds: ["l1", "l2"],
+    });
+    const snap = await load();
+    expect(snap.shareEvents).toHaveLength(1);
+    expect(snap.shareEvents[0].templateId).toBe("before_after");
   });
 
   it("clearAllData wipes journeys/logs/badges/meta", async () => {

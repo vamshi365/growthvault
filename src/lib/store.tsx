@@ -14,8 +14,11 @@ import type {
   Category,
   EvolutionLog,
   Journey,
+  ShareEvent,
+  ShareTemplateId,
 } from "./types";
 import {
+  appendShareEvent,
   clearAllData,
   DEFAULT_PROFILE,
   fileToDataUrl,
@@ -63,6 +66,13 @@ type StoreValue = {
   clearData: () => Promise<void>;
   completeJourney: (id: string) => Promise<void>;
   readPhotoFile: (file: File) => Promise<string>;
+  /** Record a successful share-out (local counter for future paywall). */
+  recordShareEvent: (input: {
+    templateId: ShareTemplateId;
+    journeyId: string;
+    logIds: string[];
+  }) => Promise<ShareEvent>;
+  shareEventCount: number;
 };
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -225,6 +235,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [snapshot, persistBadges]
   );
 
+  const recordShareEvent = useCallback(
+    async (input: {
+      templateId: ShareTemplateId;
+      journeyId: string;
+      logIds: string[];
+    }) => {
+      const event: ShareEvent = {
+        id: uid("share"),
+        createdAt: new Date().toISOString(),
+        templateId: input.templateId,
+        journeyId: input.journeyId,
+        logIds: input.logIds,
+      };
+      const shareEvents = await appendShareEvent(event);
+      setSnapshot((prev) => ({ ...prev, shareEvents }));
+      return event;
+    },
+    []
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       ready,
@@ -241,6 +271,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       clearData,
       completeJourney,
       readPhotoFile: fileToDataUrl,
+      recordShareEvent,
+      shareEventCount: snapshot.shareEvents?.length ?? 0,
     }),
     [
       ready,
@@ -254,6 +286,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       loadDemo,
       clearData,
       completeJourney,
+      recordShareEvent,
     ]
   );
 

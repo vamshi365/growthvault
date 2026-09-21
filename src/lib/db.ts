@@ -7,6 +7,7 @@ import type {
   BadgeProgress,
   EvolutionLog,
   Journey,
+  ShareEvent,
 } from "./types";
 import { initialBadges } from "./badges";
 
@@ -50,16 +51,20 @@ export const DEFAULT_PROFILE: AppProfile = {
 
 export async function loadSnapshot(): Promise<AppSnapshot> {
   const db = await getDb();
-  const [profileRaw, journeys, logs, badges] = await Promise.all([
+  const [profileRaw, journeys, logs, badges, shareEventsRaw] = await Promise.all([
     db.get("meta", "profile"),
     db.getAll("journeys"),
     db.getAll("logs"),
     db.getAll("badges"),
+    db.get("meta", "shareEvents"),
   ]);
   const profile = {
     ...DEFAULT_PROFILE,
     ...((profileRaw as AppProfile | undefined) ?? {}),
   };
+  const shareEvents = Array.isArray(shareEventsRaw)
+    ? (shareEventsRaw as ShareEvent[])
+    : [];
   return {
     profile,
     journeys: journeys.sort((a, b) => a.archiveNo - b.archiveNo),
@@ -67,6 +72,7 @@ export async function loadSnapshot(): Promise<AppSnapshot> {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     ),
     badges: badges.length ? badges : initialBadges(),
+    shareEvents,
   };
 }
 
@@ -94,6 +100,20 @@ export async function putBadges(badges: BadgeProgress[]): Promise<void> {
   ]);
 }
 
+export async function putShareEvents(events: ShareEvent[]): Promise<void> {
+  const db = await getDb();
+  await db.put("meta", events, "shareEvents");
+}
+
+export async function appendShareEvent(event: ShareEvent): Promise<ShareEvent[]> {
+  const db = await getDb();
+  const raw = await db.get("meta", "shareEvents");
+  const prev = Array.isArray(raw) ? (raw as ShareEvent[]) : [];
+  const next = [event, ...prev];
+  await db.put("meta", next, "shareEvents");
+  return next;
+}
+
 export async function clearAllData(): Promise<void> {
   const db = await getDb();
   const tx = db.transaction(
@@ -117,6 +137,9 @@ export async function writeSnapshot(snapshot: AppSnapshot): Promise<void> {
     "readwrite"
   );
   await tx.objectStore("meta").put(snapshot.profile, "profile");
+  await tx
+    .objectStore("meta")
+    .put(snapshot.shareEvents ?? [], "shareEvents");
   for (const j of snapshot.journeys) await tx.objectStore("journeys").put(j);
   for (const l of snapshot.logs) await tx.objectStore("logs").put(l);
   for (const b of snapshot.badges) await tx.objectStore("badges").put(b);

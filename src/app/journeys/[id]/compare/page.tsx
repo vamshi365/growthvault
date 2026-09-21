@@ -235,8 +235,20 @@ export default function ComparePage() {
         onSelect={onStripSelect}
       />
 
+      <Link
+        href={`/share/compose?journeyId=${encodeURIComponent(journey.id)}&logIds=${encodeURIComponent(
+          [effectiveA, effectiveB]
+            .filter((id): id is string => !!id && id !== "day1" && id !== "today")
+            .join(",")
+        )}&template=before_after`}
+        className="gv-cta block w-full py-4 text-center text-sm"
+        data-share-entry="compare"
+      >
+        Share card
+      </Link>
+
       <p className="text-center text-[11px] text-gv-text-muted">
-        Offline · photos stay on this device
+        Offline · photos stay on this device · share opens system sheet
       </p>
     </div>
   );

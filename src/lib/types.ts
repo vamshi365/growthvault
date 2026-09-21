@@ -58,11 +58,28 @@ export type AppProfile = {
   passcodeHash: string | null;
 };
 
+/** Share-out card templates (v2.1) — artifacts only, no in-app feed. */
+export type ShareTemplateId =
+  | "before_after"
+  | "streak"
+  | "award"
+  | "quote";
+
+export type ShareEvent = {
+  id: string;
+  createdAt: string;
+  templateId: ShareTemplateId;
+  journeyId: string;
+  logIds: string[];
+};
+
 export type AppSnapshot = {
   profile: AppProfile;
   journeys: Journey[];
   logs: EvolutionLog[];
   badges: BadgeProgress[];
+  /** Local share-out events for future soft paywall — no paywall UI in v2.1. */
+  shareEvents: ShareEvent[];
 };
 
 export type JourneyTemplate = {

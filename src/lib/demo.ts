@@ -76,7 +76,7 @@ export function buildDemoSnapshot(): AppSnapshot {
 
   const badges = deriveBadges([journey], logs, []);
 
-  return { profile, journeys: [journey], logs, badges };
+  return { profile, journeys: [journey], logs, badges, shareEvents: [] };
 }
 
 export function emptySnapshot(): AppSnapshot {
@@ -85,5 +85,6 @@ export function emptySnapshot(): AppSnapshot {
     journeys: [],
     logs: [],
     badges: deriveBadges([], [], []),
+    shareEvents: [],
   };
 }
