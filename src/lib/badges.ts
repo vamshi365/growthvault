@@ -1,5 +1,11 @@
-import type { BadgeId, BadgeProgress, EvolutionLog, Journey } from "./types";
-import { currentStreak } from "./streaks";
+import type {
+  BadgeId,
+  BadgeProgress,
+  EvolutionLog,
+  GraceState,
+  Journey,
+} from "./types";
+import { badgeLoggedStreak } from "./streaks";
 
 export const BADGE_META: Record<
   BadgeId,
@@ -12,17 +18,17 @@ export const BADGE_META: Record<
   },
   seven_day_warrior: {
     title: "7 Day Warrior",
-    description: "Log on 7 consecutive calendar days.",
+    description: "Log on 7 consecutive calendar days (freeze days do not count).",
     target: 7,
   },
   thirty_day_consistency: {
     title: "30 Day Consistency",
-    description: "Hold a 30-day logging streak.",
+    description: "Hold a 30-day logging streak (freeze days do not count).",
     target: 30,
   },
   hundred_day_legend: {
     title: "100 Day Legend",
-    description: "Reach a legendary 100-day streak.",
+    description: "Reach a legendary 100-day streak (freeze days do not count).",
     target: 100,
   },
   transformation_master: {
@@ -51,15 +57,18 @@ function emptyBadges(): BadgeProgress[] {
 
 /**
  * Derive badge progress from journeys + logs.
+ * Streak badges use logged-only streak (grace freezes bridge but do not count).
  * Preserves unlockedAt when already unlocked.
  */
 export function deriveBadges(
   journeys: Journey[],
   logs: EvolutionLog[],
-  previous: BadgeProgress[] = []
+  previous: BadgeProgress[] = [],
+  grace?: GraceState,
+  now = new Date()
 ): BadgeProgress[] {
   const prevMap = new Map(previous.map((b) => [b.id, b]));
-  const streak = currentStreak(logs);
+  const streak = badgeLoggedStreak(logs, now, grace?.frozenDayKeys ?? []);
   const hasJourney = journeys.length >= 1;
   const completed = journeys.some(
     (j) =>
@@ -77,15 +86,13 @@ export function deriveBadges(
     transformation_master: completed ? 1 : 0,
   };
 
-  const now = new Date().toISOString();
+  const iso = now.toISOString();
   return BADGE_ORDER.map((id) => {
     const target = BADGE_META[id].target;
     const current = Math.min(values[id], target);
     const prev = prevMap.get(id);
     const unlocked =
-      current >= target
-        ? prev?.unlockedAt ?? now
-        : null;
+      current >= target ? prev?.unlockedAt ?? iso : null;
     return { id, unlockedAt: unlocked, current, target };
   });
 }

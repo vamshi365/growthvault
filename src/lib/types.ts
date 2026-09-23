@@ -80,6 +80,9 @@ export type AppSnapshot = {
   badges: BadgeProgress[];
   /** Local share-out events for future soft paywall — no paywall UI in v2.1. */
   shareEvents: ShareEvent[];
+  /** v2.3 retention */
+  grace: GraceState;
+  reminderPrefs: ReminderPrefs;
 };
 
 export type JourneyTemplate = {
@@ -90,4 +93,45 @@ export type JourneyTemplate = {
   blurb: string;
   ultimateGoal: string;
   coverGradient: string;
+};
+
+/** Per-journey daily reminder (v2.3). Delivery is best-effort only. */
+export type Reminder = {
+  journeyId: string;
+  hour: number;
+  minute: number;
+  enabled: boolean;
+};
+
+/** Quiet hours — suppress reminder fire locally when possible. */
+export type QuietHours = {
+  enabled: boolean;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+};
+
+/**
+ * Streak grace / freeze inventory (v2.3).
+ * RULE (locked): 1 free freeze / 30 days.
+ * Freeze prevents streak break but does NOT count as a logged day for 7/30/100 badges.
+ */
+export type GraceState = {
+  /** ISO timestamp of last freeze consume; inventory refreshes 30d later. */
+  lastFreezeAt?: string;
+  /** Calendar day keys (YYYY-MM-DD) bridged by freeze — excluded from badge counts. */
+  frozenDayKeys: string[];
+};
+
+export type ReminderPrefs = {
+  reminders: Reminder[];
+  quietHours: QuietHours;
+  /**
+   * Honest retention flag: OEMs may kill exact alarms.
+   * When true and any reminder enabled → show in-app banner.
+   */
+  remindersUnreliable: boolean;
+  /** User dismissed the home banner (still shown on /settings/reminders). */
+  unreliableBannerDismissed: boolean;
 };

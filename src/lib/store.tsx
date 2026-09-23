@@ -13,7 +13,9 @@ import type {
   AppSnapshot,
   Category,
   EvolutionLog,
+  GraceState,
   Journey,
+  ReminderPrefs,
   ShareEvent,
   ShareTemplateId,
 } from "./types";
@@ -26,13 +28,29 @@ import {
   putBadges,
   putJourney,
   putLog,
+  saveGrace,
   saveProfile,
+  saveReminderPrefs,
   uid,
   writeSnapshot,
 } from "./db";
 import { deriveBadges } from "./badges";
 import { buildDemoSnapshot, emptySnapshot, PLACEHOLDER_DAY1 } from "./demo";
-import { currentStreak, daysSinceStart, longestStreak } from "./streaks";
+import {
+  currentStreak,
+  dayKey,
+  daysSinceStart,
+  loggedDayKeys,
+  longestStreak,
+} from "./streaks";
+import {
+  canConsumeFreeze,
+  consumeFreeze,
+  freezesRemaining,
+  maybeAutoFreeze,
+} from "./grace";
+import { syncLocalReminders, withUnreliableFlag } from "./notifications";
+import { pushWidgetData } from "./widgetBridge";
 
 type CreateJourneyInput = {
   title: string;
@@ -56,6 +74,7 @@ type StoreValue = {
   snapshot: AppSnapshot;
   streak: number;
   longest: number;
+  freezesLeft: number;
   refresh: () => Promise<void>;
   createJourney: (input: CreateJourneyInput) => Promise<Journey>;
   addLog: (input: AddLogInput) => Promise<EvolutionLog>;
@@ -66,16 +85,37 @@ type StoreValue = {
   clearData: () => Promise<void>;
   completeJourney: (id: string) => Promise<void>;
   readPhotoFile: (file: File) => Promise<string>;
-  /** Record a successful share-out (local counter for future paywall). */
   recordShareEvent: (input: {
     templateId: ShareTemplateId;
     journeyId: string;
     logIds: string[];
   }) => Promise<ShareEvent>;
   shareEventCount: number;
+  /** Manual freeze for a missed calendar day (YYYY-MM-DD). */
+  applyFreeze: (day?: string) => Promise<boolean>;
+  updateReminderPrefs: (prefs: ReminderPrefs) => Promise<void>;
+  dismissUnreliableBanner: () => Promise<void>;
 };
 
 const StoreContext = createContext<StoreValue | null>(null);
+
+async function syncWidgetFromSnap(snap: AppSnapshot) {
+  const frozen = snap.grace?.frozenDayKeys ?? [];
+  const streak = currentStreak(snap.logs, new Date(), frozen);
+  const active = snap.journeys.filter((j) => j.status === "active");
+  const primary =
+    active.find((j) => j.id === snap.profile.primaryJourneyId) ??
+    active[0] ??
+    null;
+  const dayLabel = primary
+    ? `Day ${daysSinceStart(primary.startedAt)}`
+    : "Open to log";
+  await pushWidgetData({
+    streak,
+    journeyTitle: primary?.title ?? "GrowthVault",
+    dayLabel,
+  });
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -83,13 +123,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const snap = await loadSnapshot();
-      const badges = deriveBadges(snap.journeys, snap.logs, snap.badges);
+      let snap = await loadSnapshot();
+      const auto = maybeAutoFreeze(
+        loggedDayKeys(snap.logs),
+        snap.grace,
+        new Date()
+      );
+      if (auto.appliedDay) {
+        await saveGrace(auto.grace);
+        snap = { ...snap, grace: auto.grace };
+      }
+      const badges = deriveBadges(
+        snap.journeys,
+        snap.logs,
+        snap.badges,
+        snap.grace
+      );
       if (JSON.stringify(badges) !== JSON.stringify(snap.badges)) {
         await putBadges(badges);
         snap.badges = badges;
       }
       setSnapshot(snap);
+      void syncWidgetFromSnap(snap);
     } catch {
       setSnapshot(emptySnapshot());
     } finally {
@@ -102,8 +157,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const persistBadges = useCallback(
-    async (journeys: Journey[], logs: EvolutionLog[], prev = snapshot.badges) => {
-      const badges = deriveBadges(journeys, logs, prev);
+    async (
+      journeys: Journey[],
+      logs: EvolutionLog[],
+      grace: GraceState,
+      prev = snapshot.badges
+    ) => {
+      const badges = deriveBadges(journeys, logs, prev, grace);
       await putBadges(badges);
       return badges;
     },
@@ -133,8 +193,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         primaryJourneyId: journey.id,
       };
       await saveProfile(profile);
-      const badges = await persistBadges(journeys, snapshot.logs);
-      setSnapshot({ ...snapshot, profile, journeys, badges });
+      const badges = await persistBadges(
+        journeys,
+        snapshot.logs,
+        snapshot.grace
+      );
+      const next = { ...snapshot, profile, journeys, badges };
+      setSnapshot(next);
+      void syncWidgetFromSnap(next);
       return journey;
     },
     [snapshot, persistBadges]
@@ -169,8 +235,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         j.id === updatedJourney.id ? updatedJourney : j
       );
       const logs = [log, ...snapshot.logs];
-      const badges = await persistBadges(journeys, logs);
-      setSnapshot({ ...snapshot, journeys, logs, badges });
+      const badges = await persistBadges(journeys, logs, snapshot.grace);
+      const next = { ...snapshot, journeys, logs, badges };
+      setSnapshot(next);
+      void syncWidgetFromSnap(next);
       return log;
     },
     [snapshot, persistBadges]
@@ -182,8 +250,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const journeys = snapshot.journeys.map((j) =>
         j.id === journey.id ? journey : j
       );
-      const badges = await persistBadges(journeys, snapshot.logs);
-      setSnapshot({ ...snapshot, journeys, badges });
+      const badges = await persistBadges(
+        journeys,
+        snapshot.logs,
+        snapshot.grace
+      );
+      const next = { ...snapshot, journeys, badges };
+      setSnapshot(next);
+      void syncWidgetFromSnap(next);
     },
     [snapshot, persistBadges]
   );
@@ -192,7 +266,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     async (id: string | null) => {
       const profile = { ...snapshot.profile, primaryJourneyId: id };
       await saveProfile(profile);
-      setSnapshot({ ...snapshot, profile });
+      const next = { ...snapshot, profile };
+      setSnapshot(next);
+      void syncWidgetFromSnap(next);
     },
     [snapshot]
   );
@@ -210,6 +286,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const demo = buildDemoSnapshot();
     await writeSnapshot(demo);
     setSnapshot(demo);
+    void syncWidgetFromSnap(demo);
   }, []);
 
   const clearData = useCallback(async () => {
@@ -217,7 +294,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const empty = emptySnapshot();
     await saveProfile(DEFAULT_PROFILE);
     await putBadges(empty.badges);
+    await saveGrace(empty.grace);
+    await saveReminderPrefs(empty.reminderPrefs);
     setSnapshot(empty);
+    void syncWidgetFromSnap(empty);
   }, []);
 
   const completeJourney = useCallback(
@@ -229,7 +309,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const journeys = snapshot.journeys.map((j) =>
         j.id === id ? updated : j
       );
-      const badges = await persistBadges(journeys, snapshot.logs);
+      const badges = await persistBadges(
+        journeys,
+        snapshot.logs,
+        snapshot.grace
+      );
       setSnapshot({ ...snapshot, journeys, badges });
     },
     [snapshot, persistBadges]
@@ -255,12 +339,62 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const applyFreeze = useCallback(
+    async (day?: string) => {
+      const target = day ?? dayKey(addDaysDate(new Date(), -1));
+      if (!canConsumeFreeze(snapshot.grace, target)) return false;
+      const grace = consumeFreeze(snapshot.grace, target);
+      await saveGrace(grace);
+      const badges = await persistBadges(
+        snapshot.journeys,
+        snapshot.logs,
+        grace
+      );
+      const next = { ...snapshot, grace, badges };
+      setSnapshot(next);
+      void syncWidgetFromSnap(next);
+      return true;
+    },
+    [snapshot, persistBadges]
+  );
+
+  const updateReminderPrefs = useCallback(
+    async (prefs: ReminderPrefs) => {
+      const titles: Record<string, string> = {};
+      for (const j of snapshot.journeys) titles[j.id] = j.title;
+      const result = await syncLocalReminders(prefs, titles);
+      const nextPrefs = withUnreliableFlag(
+        prefs,
+        result.unreliable || !result.ok ? true : prefs.remindersUnreliable
+      );
+      // If schedule succeeded and user hadn't flagged, keep prior unreliable unless fail
+      const finalPrefs =
+        result.ok && !result.unreliable
+          ? { ...prefs, remindersUnreliable: prefs.remindersUnreliable }
+          : nextPrefs;
+      await saveReminderPrefs(finalPrefs);
+      setSnapshot((prev) => ({ ...prev, reminderPrefs: finalPrefs }));
+    },
+    [snapshot.journeys]
+  );
+
+  const dismissUnreliableBanner = useCallback(async () => {
+    const prefs = {
+      ...snapshot.reminderPrefs,
+      unreliableBannerDismissed: true,
+    };
+    await saveReminderPrefs(prefs);
+    setSnapshot((prev) => ({ ...prev, reminderPrefs: prefs }));
+  }, [snapshot.reminderPrefs]);
+
+  const frozen = snapshot.grace?.frozenDayKeys ?? [];
   const value = useMemo<StoreValue>(
     () => ({
       ready,
       snapshot,
-      streak: currentStreak(snapshot.logs),
-      longest: longestStreak(snapshot.logs),
+      streak: currentStreak(snapshot.logs, new Date(), frozen),
+      longest: longestStreak(snapshot.logs, frozen),
+      freezesLeft: freezesRemaining(snapshot.grace),
       refresh,
       createJourney,
       addLog,
@@ -273,10 +407,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       readPhotoFile: fileToDataUrl,
       recordShareEvent,
       shareEventCount: snapshot.shareEvents?.length ?? 0,
+      applyFreeze,
+      updateReminderPrefs,
+      dismissUnreliableBanner,
     }),
     [
       ready,
       snapshot,
+      frozen,
       refresh,
       createJourney,
       addLog,
@@ -287,12 +425,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       clearData,
       completeJourney,
       recordShareEvent,
+      applyFreeze,
+      updateReminderPrefs,
+      dismissUnreliableBanner,
     ]
   );
 
   return (
     <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
   );
+}
+
+function addDaysDate(d: Date, delta: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + delta);
+  return x;
 }
 
 export function useStore(): StoreValue {

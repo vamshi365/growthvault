@@ -54,6 +54,8 @@ describe("IndexedDB CRUD", () => {
     expect(snap.logs).toEqual([]);
     expect(snap.badges).toHaveLength(5);
     expect(snap.shareEvents).toEqual([]);
+    expect(snap.grace.frozenDayKeys).toEqual([]);
+    expect(snap.reminderPrefs.reminders).toEqual([]);
   });
 
   it("creates and reads a journey (putJourney)", async () => {
@@ -100,6 +102,19 @@ describe("IndexedDB CRUD", () => {
       logs: [makeLog("new", "l_new")],
       badges: initialBadges(),
       shareEvents: [],
+      grace: { frozenDayKeys: [] },
+      reminderPrefs: {
+        reminders: [],
+        quietHours: {
+          enabled: false,
+          startHour: 22,
+          startMinute: 0,
+          endHour: 7,
+          endMinute: 0,
+        },
+        remindersUnreliable: false,
+        unreliableBannerDismissed: false,
+      },
     });
     const snap = await loadSnapshot();
     expect(snap.profile.displayName).toBe("Fresh");
@@ -119,6 +134,34 @@ describe("IndexedDB CRUD", () => {
     const snap = await loadSnapshot();
     expect(snap.logs[0].referenceLogId).toBe("l_parent");
     expect(snap.logs[0].captureSource).toBe("camera");
+  });
+
+  it("persists grace and reminderPrefs", async () => {
+    const { saveGrace, saveReminderPrefs, loadSnapshot: load } = await import(
+      "@/lib/db"
+    );
+    await saveGrace({
+      lastFreezeAt: "2026-09-01T12:00:00.000Z",
+      frozenDayKeys: ["2026-09-01"],
+    });
+    await saveReminderPrefs({
+      reminders: [
+        { journeyId: "j1", hour: 19, minute: 0, enabled: true },
+      ],
+      quietHours: {
+        enabled: true,
+        startHour: 22,
+        startMinute: 0,
+        endHour: 7,
+        endMinute: 0,
+      },
+      remindersUnreliable: true,
+      unreliableBannerDismissed: false,
+    });
+    const snap = await load();
+    expect(snap.grace.frozenDayKeys).toEqual(["2026-09-01"]);
+    expect(snap.reminderPrefs.reminders[0].hour).toBe(19);
+    expect(snap.reminderPrefs.remindersUnreliable).toBe(true);
   });
 
   it("persists shareEvents for future paywall counter", async () => {

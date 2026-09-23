@@ -76,7 +76,26 @@ export function buildDemoSnapshot(): AppSnapshot {
 
   const badges = deriveBadges([journey], logs, []);
 
-  return { profile, journeys: [journey], logs, badges, shareEvents: [] };
+  return {
+    profile,
+    journeys: [journey],
+    logs,
+    badges,
+    shareEvents: [],
+    grace: { frozenDayKeys: [] },
+    reminderPrefs: {
+      reminders: [],
+      quietHours: {
+        enabled: false,
+        startHour: 22,
+        startMinute: 0,
+        endHour: 7,
+        endMinute: 0,
+      },
+      remindersUnreliable: false,
+      unreliableBannerDismissed: false,
+    },
+  };
 }
 
 export function emptySnapshot(): AppSnapshot {
@@ -86,5 +105,18 @@ export function emptySnapshot(): AppSnapshot {
     logs: [],
     badges: deriveBadges([], [], []),
     shareEvents: [],
+    grace: { frozenDayKeys: [] },
+    reminderPrefs: {
+      reminders: [],
+      quietHours: {
+        enabled: false,
+        startHour: 22,
+        startMinute: 0,
+        endHour: 7,
+        endMinute: 0,
+      },
+      remindersUnreliable: false,
+      unreliableBannerDismissed: false,
+    },
   };
 }

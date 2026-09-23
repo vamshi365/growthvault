@@ -50,6 +50,32 @@ export default function ProfilePage() {
 
       <div className="gv-card divide-y divide-gv-border overflow-hidden">
         <Link
+          href="/settings/reminders"
+          className="flex items-center gap-3 px-4 py-4"
+        >
+          <span className="text-gv-accent">◎</span>
+          <div className="flex-1">
+            <p className="font-semibold">Reminders</p>
+            <p className="text-xs text-gv-text-muted">
+              Daily time · quiet hours · best-effort
+            </p>
+          </div>
+          <span className="text-gv-accent">→</span>
+        </Link>
+        <Link
+          href="/settings/grace"
+          className="flex items-center gap-3 px-4 py-4"
+        >
+          <span className="text-gv-accent">❄</span>
+          <div className="flex-1">
+            <p className="font-semibold">Streak grace</p>
+            <p className="text-xs text-gv-text-muted">
+              1 free freeze / 30 days · badges stay honest
+            </p>
+          </div>
+          <span className="text-gv-accent">→</span>
+        </Link>
+        <Link
           href="/profile/passcode"
           className="flex items-center gap-3 px-4 py-4"
         >

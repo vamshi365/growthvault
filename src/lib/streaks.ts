@@ -1,4 +1,4 @@
-import type { EvolutionLog } from "./types";
+import type { EvolutionLog, GraceState } from "./types";
 
 /** Calendar day key YYYY-MM-DD in local time. */
 export function dayKey(iso: string | Date): string {
@@ -9,7 +9,7 @@ export function dayKey(iso: string | Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function addDays(key: string, delta: number): string {
+export function addDays(key: string, delta: number): string {
   const [y, m, d] = key.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + delta);
@@ -23,12 +23,27 @@ export function loggedDayKeys(logs: EvolutionLog[]): Set<string> {
   return set;
 }
 
+/** Logged days ∪ freeze-bridged days (streak continuity only). */
+export function streakCoverageKeys(
+  logs: EvolutionLog[],
+  frozenDayKeys: string[] = []
+): Set<string> {
+  const set = loggedDayKeys(logs);
+  for (const k of frozenDayKeys) set.add(k);
+  return set;
+}
+
 /**
- * Current streak: consecutive calendar days ending today or yesterday
- * with ≥1 log (any journey). Documented choice: GLOBAL streak.
+ * Current streak: consecutive calendar days ending today or yesterday.
+ * Frozen days bridge gaps (prevent break) and count toward display streak.
+ * Documented choice: GLOBAL streak.
  */
-export function currentStreak(logs: EvolutionLog[], now = new Date()): number {
-  const days = loggedDayKeys(logs);
+export function currentStreak(
+  logs: EvolutionLog[],
+  now = new Date(),
+  frozenDayKeys: string[] = []
+): number {
+  const days = streakCoverageKeys(logs, frozenDayKeys);
   if (days.size === 0) return 0;
   let cursor = dayKey(now);
   if (!days.has(cursor)) {
@@ -43,9 +58,40 @@ export function currentStreak(logs: EvolutionLog[], now = new Date()): number {
   return streak;
 }
 
-/** Longest historical consecutive run across all logged days. */
-export function longestStreak(logs: EvolutionLog[]): number {
-  const days = loggedDayKeys(logs);
+/**
+ * Badge streak (7/30/100): consecutive run length counting ONLY logged days.
+ * Freeze bridges keep the run alive but do not increment badge progress.
+ */
+export function badgeLoggedStreak(
+  logs: EvolutionLog[],
+  now = new Date(),
+  frozenDayKeys: string[] = []
+): number {
+  const logged = loggedDayKeys(logs);
+  const frozen = new Set(frozenDayKeys);
+  if (logged.size === 0) return 0;
+
+  let cursor = dayKey(now);
+  const covered = (k: string) => logged.has(k) || frozen.has(k);
+  if (!covered(cursor)) {
+    cursor = addDays(cursor, -1);
+    if (!covered(cursor)) return 0;
+  }
+
+  let loggedCount = 0;
+  while (covered(cursor)) {
+    if (logged.has(cursor)) loggedCount += 1;
+    cursor = addDays(cursor, -1);
+  }
+  return loggedCount;
+}
+
+/** Longest historical consecutive run (logged ∪ frozen). */
+export function longestStreak(
+  logs: EvolutionLog[],
+  frozenDayKeys: string[] = []
+): number {
+  const days = streakCoverageKeys(logs, frozenDayKeys);
   if (days.size === 0) return 0;
   const sorted = Array.from(days).sort();
   let best = 1;
@@ -90,4 +136,8 @@ export function relativeTime(iso: string, now = new Date()): string {
   if (days < 30) return `${days} days ago`;
   const months = Math.floor(days / 30);
   return months === 1 ? "1 month ago" : `${months} months ago`;
+}
+
+export function graceFromSnapshot(grace?: GraceState): string[] {
+  return grace?.frozenDayKeys ?? [];
 }

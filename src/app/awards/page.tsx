@@ -10,6 +10,7 @@ import {
 import { KEEP_BUILDING_QUOTES, pickQuote } from "@/lib/quotes";
 import { AwardsIcon } from "@/components/icons";
 import { ProgressBar } from "@/components/ui";
+import { GraceBadge } from "@/components/GraceBadge";
 
 export default function AwardsPage() {
   const { ready, snapshot } = useStore();
@@ -37,6 +38,13 @@ export default function AwardsPage() {
           <AwardsIcon />
         </div>
       </header>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <GraceBadge grace={snapshot.grace} />
+        <p className="text-xs text-gv-text-muted">
+          Freeze days bridge streaks but do not count toward 7/30/100.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-3">
         {BADGE_ORDER.map((id) => {

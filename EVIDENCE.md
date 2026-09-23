@@ -333,3 +333,76 @@ AppSnapshot.shareEvents: ShareEvent[]
 | Build | `npm run build` → `npx cap sync` → `./gradlew assembleDebug` |
 | Commit | `64b204953093376c5d035829c937ccd18487fd06` on `main` |
 | URL | https://github.com/vamshi365/growthvault/commit/64b204953093376c5d035829c937ccd18487fd06 |
+
+## v2.3 — Retention (widgets + reminders + streak grace) — 2026-09-23 BST
+
+**Authority:** `/workspace/architect/growthvault-v2-blueprint.md` § v2.3  
+**Scope:** Home widgets · reminders · streak grace/freeze only. No v2.4 paywall, no social feed, no live viewfinder stretch.  
+**CREATOR chrome:** `#0B0B10` / `#9F84FF`. Reminder/widget copy is quiet — never guilt (“Don’t break your streak!!”).
+
+### Grace rule (locked)
+
+| Field | Value |
+|-------|--------|
+| Rule id | `one_freeze_per_30_days` |
+| Inventory | **1 free freeze / 30 days** |
+| Effect | Freeze bridges a missed calendar day so the streak does not break |
+| Badges | Freeze days **do not** count as logged days for 7 / 30 / 100 badges (`badgeLoggedStreak`) |
+| Auto | `maybeAutoFreeze` quietly applies when yesterday is the only gap and inventory remains |
+| UI | `GraceBadge` on Home + Awards; full inventory on `/settings/grace` |
+
+### Routes
+
+| Route | Change |
+|-------|--------|
+| `/settings/reminders` | Schedule (primary journey) + quiet hours; `@capacitor/local-notifications`; best-effort; OEM banner |
+| `/settings/grace` | Freeze inventory + manual use for yesterday; rule copy |
+| `/profile` | Entries → Reminders + Streak grace |
+| `/home` | `GraceBadge` + unreliable-reminders banner (“Reminders unreliable — add widget”) |
+| `/awards` | `GraceBadge` adjacency + honesty note |
+
+### Reminders
+
+- Plugin: `@capacitor/local-notifications@6.1.3`
+- Body: “Log today’s evolution?”
+- Quiet hours wrap-midnight aware; schedule shifts to quiet-hours end when needed
+- Banner when `remindersUnreliable` and any reminder enabled
+- Permissions: `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`
+
+### Widgets (Android)
+
+| Widget | Size | Content |
+|--------|------|---------|
+| Streak | small (~2×1) | Live streak number + journey title (when synced) |
+| Active journey | medium (~3×2) | Title · Day N · streak line |
+
+- Native `AppWidgetProvider`s + vault chrome (`#0B0B10` / `#9F84FF`)
+- Capacitor plugin `WidgetData` writes SharedPreferences; JS `pushWidgetData` on store refresh/log
+- Deep link: `growthvault://home` → MainActivity
+- **Honest limits:** Live values appear after the app has opened at least once (prefs seed). Until then placeholder “—” / “Open app to sync”. OEM launchers may delay widget update up to `updatePeriodMillis` (30 min) plus app-driven refresh. Not a Glance Compose widget; RemoteViews XML. No before/after thumbs in v2.3 medium widget (title + day + streak only).
+
+### AppState delta
+
+```ts
+AppSnapshot {
+  grace: GraceState;           // lastFreezeAt?, frozenDayKeys[]
+  reminderPrefs: ReminderPrefs // reminders[], quietHours, unreliable flags
+}
+```
+
+### Gates
+
+- `npm test` — **PASS** (56 tests; grace + reminders + streak/badge freeze rules)
+- `npm run build` — **PASS** (`/settings/reminders`, `/settings/grace` exported)
+- Camera · overlay · share cards · P0 polish · local-first honesty retained
+
+### Android debug APK (v2.3)
+
+| Field | Value |
+|-------|--------|
+| Path | `/workspace/growthvault/dist/growthvault-debug.apk` |
+| Easy path | `/workspace/growthvault/GROWTHVAULT-DEBUG.apk` |
+| SHA256 | `7e6f6b384f02e2f1925790bceb83429038eaec715515c4a26bf1a54824435613` |
+| Size | `9671716` bytes (~9.22 MiB) |
+| Plugins | `@capacitor/camera@6.1.3` · `@capacitor/share@6.0.3` · `@capacitor/local-notifications@6.1.3` |
+| Build | `npm run build` → `npx cap sync` → `./gradlew assembleDebug` |

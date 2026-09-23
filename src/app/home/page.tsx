@@ -11,9 +11,11 @@ import {
   ProfileButton,
   QuickStatPair,
 } from "@/components/ui";
+import { GraceBadge } from "@/components/GraceBadge";
+import { RemindersUnreliableBanner } from "@/components/RemindersUnreliableBanner";
 
 export default function HomePage() {
-  const { ready, snapshot, streak } = useStore();
+  const { ready, snapshot, streak, dismissUnreliableBanner } = useStore();
   const active = snapshot.journeys.filter((j) => j.status === "active");
   const primary =
     active.find((j) => j.id === snapshot.profile.primaryJourneyId) ??
@@ -35,6 +37,15 @@ export default function HomePage() {
 
   return (
     <div className="gv-page">
+      <RemindersUnreliableBanner
+        prefs={snapshot.reminderPrefs}
+        onDismiss={() => void dismissUnreliableBanner()}
+      />
+
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <GraceBadge grace={snapshot.grace} compact />
+      </div>
+
       <header className="flex items-start justify-between gap-3">
         <div>
           {hasJourneys && primary ? (

@@ -4,4 +4,8 @@
     <string name="title_activity_main">GrowthVault</string>
     <string name="package_name">com.growthvault.app</string>
     <string name="custom_url_scheme">com.growthvault.app</string>
+    <string name="widget_streak_description">GrowthVault streak glance</string>
+    <string name="widget_journey_description">Active journey + streak</string>
+    <string name="widget_streak_name">Streak</string>
+    <string name="widget_journey_name">Active journey</string>
 </resources>
